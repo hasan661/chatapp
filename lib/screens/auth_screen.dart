@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({Key? key}) : super(key: key);
@@ -12,37 +14,36 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
-  var isLoading=false;
+  var isLoading = false;
   final _auth = FirebaseAuth.instance;
-  void _submitAuthForm(
-    String email,
-    String password,
-    String username,
-    bool isLogin,
-    BuildContext ctx
-  ) async {
-    var authResult;
+  void _submitAuthForm(String email, String password, String username,
+      File image, bool isLogin, BuildContext ctx) async {
+    dynamic authResult;
 
     try {
       setState(() {
-          isLoading=true;
-        });
+        isLoading = true;
+      });
       if (isLogin) {
-        
         authResult = await _auth.signInWithEmailAndPassword(
             email: email, password: password);
-          
-        
       } else {
         authResult = await _auth.createUserWithEmailAndPassword(
             email: email, password: password);
-            await FirebaseFirestore.instance.collection('users').doc(authResult.user.uid).set({
-              "username":username,
-              "email":email
-            });
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(authResult.user.uid)
+            .set({"username": username, "email": email});
+        final ref= FirebaseStorage.instance
+            .ref()
+            .child(
+              'user_images',
+            )
+            .child(
+              authResult.user.uid + '.jpg',
+            );
+        await ref.putFile(image).whenComplete(() => print("done"));
       }
-      
-
     } on PlatformException catch (err) {
       var message = "An error occured please check your credentials!";
 
@@ -50,7 +51,7 @@ class _AuthScreenState extends State<AuthScreen> {
         message = err.message.toString();
       }
       setState(() {
-        isLoading=false;
+        isLoading = false;
       });
       ScaffoldMessenger.of(ctx).showSnackBar(
         SnackBar(
@@ -60,11 +61,11 @@ class _AuthScreenState extends State<AuthScreen> {
           backgroundColor: Theme.of(ctx).errorColor,
         ),
       );
-    }catch(err){
+    } catch (err) {
       setState(() {
-        isLoading=false;
+        isLoading = false;
       });
-       ScaffoldMessenger.of(ctx).showSnackBar(
+      ScaffoldMessenger.of(ctx).showSnackBar(
         SnackBar(
           content: Text(
             err.toString(),
@@ -80,10 +81,7 @@ class _AuthScreenState extends State<AuthScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).primaryColor,
       body: Center(
-          child: AuthForm(
-        submitFn: _submitAuthForm,
-        isloading:isLoading
-      )),
+          child: AuthForm(submitFn: _submitAuthForm, isloading: isLoading)),
     );
   }
 }
