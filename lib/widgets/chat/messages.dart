@@ -37,7 +37,8 @@ class Messages extends StatelessWidget {
                   message: chatDocs[index]["text"],
                   isMe: chatDocs[index]["userId"] == future.data!.uid,
                   userId: chatDocs[index]["userId"],
-                  userName:chatDocs[index]["username"]
+                  userName:chatDocs[index]["username"],
+                  imageURL:chatDocs[index]["userImage"]
                 ),
               );
             }),

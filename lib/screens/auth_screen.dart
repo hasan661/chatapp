@@ -30,11 +30,7 @@ class _AuthScreenState extends State<AuthScreen> {
       } else {
         authResult = await _auth.createUserWithEmailAndPassword(
             email: email, password: password);
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(authResult.user.uid)
-            .set({"username": username, "email": email});
-        final ref= FirebaseStorage.instance
+        final ref = FirebaseStorage.instance
             .ref()
             .child(
               'user_images',
@@ -42,7 +38,17 @@ class _AuthScreenState extends State<AuthScreen> {
             .child(
               authResult.user.uid + '.jpg',
             );
-        await ref.putFile(image).whenComplete(() => print("done"));
+        await ref.putFile(image).whenComplete(() => print(""));
+        final url = await ref.getDownloadURL();
+
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(authResult.user.uid)
+            .set({
+          "username": username,
+          "email": email,
+          "image_url":url
+        });
       }
     } on PlatformException catch (err) {
       var message = "An error occured please check your credentials!";
